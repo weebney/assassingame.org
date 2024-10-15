@@ -70,7 +70,7 @@
                 <br />
                 <button id="target_eliminated">Target Eliminated</button>
                 <span class="divider">&Tab;|&Tab;</span>
-                <button>I was Eliminated</button>
+                <button id="self_eliminated">I was Eliminated</button>
             </div>
             <div id="not_started">
                 <h1>The game has not started yet.</h1>
@@ -197,6 +197,40 @@
                             "Failed to mark target as eliminated: " +
                                 error.message,
                         );
+                    }
+                });
+        </script>
+
+        <script>
+            document
+                .getElementById("self_eliminated")
+                .addEventListener("click", async (e) => {
+                    try {
+                        if (
+                            confirm(
+                                `Are you sure you want to mark yourself as eliminated? This cannot be undone and you will be removed from the game.`,
+                            )
+                        ) {
+                            const game = await pb
+                                .collection("games")
+                                .getFirstListItem(
+                                    `game_code='${gameCode}'`,
+                                    {},
+                                );
+
+                            const player_record = await pb
+                                .collection("players")
+                                .getFirstListItem(`game='${game.id}'`, {});
+
+                            await pb
+                                .collection("players")
+                                .update(player_record.id, {
+                                    is_alive: false,
+                                });
+                            window.location.href = "/eliminated.html";
+                        }
+                    } catch (error) {
+                        alert("Failed to leave game: " + error.message);
                     }
                 });
         </script>
