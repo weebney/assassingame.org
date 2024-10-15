@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Login - Assassin Game</title>
+        <link rel="stylesheet" href="reset.css" />
+        <link rel="stylesheet" href="styles.css" />
+        <script src="/pb/pocketbase.umd.js"></script>
+        <script>
+            const pb = new PocketBase("http://127.0.0.1:8090");
+        </script>
+    </head>
+
+    <script>
+        // redirect to dashboard if authenticated
+        if (pb.authStore.isValid) {
+            window.location.href = "/dashboard.html";
+        }
+    </script>
+
+    <body>
+        <section id="main">
+            <h1>Login</h1>
+            <hr />
+            <br />
+            <form id="loginForm">
+                <label for="email">Email</label>
+                <input
+                    type="email"
+                    placeholder="email@domain.com"
+                    name="email"
+                    id="email"
+                    required
+                />
+                <br />
+                <br />
+                <label for="password">Password<br /></label>
+                <input
+                    type="password"
+                    placeholder="************"
+                    name="password"
+                    id="password"
+                    required
+                />
+                <br />
+                <br />
+                <br />
+                <button type="submit">Submit</button>
+                <br />
+                <br />
+            </form>
+            <button onclick="window.location.href = '/'">Back</button>
+            <br />
+            <br />
+            <div id="message"></div>
+            <br />
+            <br />
+            <a href="/reset_password.html">Reset password</a>
+        </section>
+
+        <script>
+            document
+                .getElementById("loginForm")
+                .addEventListener("submit", async (e) => {
+                    e.preventDefault();
+
+                    const email = document.getElementById("email").value;
+                    const password = document.getElementById("password").value;
+
+                    try {
+                        const authData = await pb
+                            .collection("users")
+                            .authWithPassword(email, password);
+
+                        // Authentication successful
+                        document.getElementById("message").textContent =
+                            "Login successful!";
+                        console.log("User authenticated:", authData);
+
+                        window.location.href = "/dashboard.html";
+                    } catch (error) {
+                        // Authentication failed
+                        document.getElementById("message").textContent =
+                            "Login failed: " + error.message;
+                        console.error("Authentication error:", error);
+                    }
+                });
+        </script>
+    </body>
+</html>

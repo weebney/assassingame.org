@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Register - Assassin Game</title>
+        <link rel="stylesheet" href="reset.css" />
+        <link rel="stylesheet" href="styles.css" />
+        <script src="/pb/pocketbase.umd.js"></script>
+        <script>
+            const pb = new PocketBase("http://127.0.0.1:8090");
+        </script>
+    </head>
+
+    <script>
+        // redirect to dashboard if authenticated
+        if (pb.authStore.isValid) {
+            window.location.href = "/dashboard.html";
+        }
+    </script>
+
+    <body>
+        <section id="main">
+            <h1>Register</h1>
+            <hr />
+            <br />
+            <form id="registrationForm">
+                <label for="name">Your name</label>
+                <input
+                    id="name"
+                    type="text"
+                    placeholder="John Doe"
+                    name="name"
+                    required
+                />
+                <br />
+                <br />
+                <label for="email">Your email</label>
+                <input
+                    id="email"
+                    type="email"
+                    placeholder="email@domain.com"
+                    name="email"
+                    required
+                />
+                <br />
+                <p>
+                    Note: you will not be able to<br />change your name or
+                    email.
+                </p>
+                <label for="password">Your password<br /></label>
+                <input
+                    id="password"
+                    type="password"
+                    placeholder="************"
+                    name="password"
+                    required
+                />
+                <br />
+                <br />
+                <label for="password">Confirm password<br /></label>
+                <input
+                    id="passwordConfirm"
+                    type="password"
+                    placeholder="************"
+                    name="password"
+                    required
+                />
+                <br />
+                <br />
+                <br />
+                <label for="picture">Your picture</label> <br />
+                <input type="file" id="avatar" accept="image/*" required />
+                <br />
+                <br />
+                <br />
+                <br />
+                <button type="submit">Register</button>
+                <br />
+                <br />
+            </form>
+            <button onclick="window.location.href = '/'">Back</button>
+            <br />
+            <br />
+            <p id="errorMessage" class="error"></p>
+        </section>
+
+        <script>
+            // Function to handle user registration
+            async function registerUser(
+                email,
+                password,
+                passwordConfirm,
+                name,
+                avatar,
+            ) {
+                try {
+                    const data = {
+                        email: email,
+                        password: password,
+                        passwordConfirm: passwordConfirm,
+                        name: name,
+                        avatar: avatar,
+                    };
+
+                    const createdUser = await pb
+                        .collection("users")
+                        .create(data);
+                    console.log("User registered successfully:", createdUser);
+
+                    return createdUser;
+                } catch (error) {
+                    console.error(
+                        "Error registering user (maximum name length 32):",
+                        error,
+                    );
+                    throw error;
+                }
+            }
+
+            // Handle form submission
+            document
+                .getElementById("registrationForm")
+                .addEventListener("submit", async (e) => {
+                    e.preventDefault();
+
+                    const email = document.getElementById("email").value;
+                    const password = document.getElementById("password").value;
+                    const passwordConfirm =
+                        document.getElementById("passwordConfirm").value;
+                    const name = document.getElementById("name").value;
+                    const avatar = document.getElementById("avatar").files[0];
+                    const errorMessage =
+                        document.getElementById("errorMessage");
+
+                    try {
+                        const user = await registerUser(
+                            email,
+                            password,
+                            passwordConfirm,
+                            name,
+                            avatar,
+                        );
+                        alert(
+                            "Registration successful! Please verify your email to login.",
+                        );
+                        await pb.collection("users").requestVerification(email);
+                        window.location.href = "/login.html";
+                    } catch (error) {
+                        errorMessage.textContent =
+                            "Registration failed: " + error.message;
+                    }
+                });
+        </script>
+    </body>
+</html>

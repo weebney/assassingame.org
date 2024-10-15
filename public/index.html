@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Assassin Game</title>
+        <link rel="stylesheet" href="reset.css" />
+        <link rel="stylesheet" href="styles.css" />
+        <script src="pb/pocketbase.umd.js"></script>
+        <script>
+            const pb = new PocketBase("http://127.0.0.1:8090");
+        </script>
+    </head>
+
+    <script>
+        // redirect to dashboard if authenticated
+        if (pb.authStore.isValid) {
+            window.location.href = "/dashboard.html";
+        }
+    </script>
+
+    <body>
+        <section id="main">
+            <h1>Assassin Game</h1>
+            <hr />
+            <br />
+            <button onclick="location.href='/login.html';">Login</button>
+            <br />
+            <br />
+            <button onclick="location.href='/register.html';">Register</button>
+            <br />
+            <br />
+            <br />
+            <a href="/rules.html">Rule Book</a>
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <footer>
+                <a
+                    href="https://weebney.com"
+                    style="text-decoration: none"
+                    target="_blank"
+                >
+                    <small>Created by weebney 2024 </small>
+                </a>
+            </footer>
+        </section>
+    </body>
+</html>

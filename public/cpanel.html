@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Control Panel - Assassin Game</title>
+        <link rel="stylesheet" href="reset.css" />
+        <link rel="stylesheet" href="styles.css" />
+        <script src="pb/pocketbase.umd.js"></script>
+        <script>
+            const pb = new PocketBase("http://127.0.0.1:8090");
+        </script>
+    </head>
+
+    <style>
+        .removable {
+            text-decoration: none;
+        }
+
+        .removable:hover {
+            text-decoration: line-through;
+            cursor: pointer;
+        }
+    </style>
+
+    <script>
+        // bounce unauthed
+        if (!pb.authStore.isValid) {
+            window.location.href = "/";
+        }
+    </script>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const code_param = urlParams.get("code");
+
+        async function getInfo() {
+            const record = await pb
+                .collection("games")
+                .getFirstListItem(`game_code='${code_param}'`, {});
+
+            document.getElementById("header").textContent =
+                `${record.name} (${record.game_code})`;
+
+            if (record.started) {
+                document.getElementById("not_started").hidden = true;
+                document.getElementById("started").hidden = false;
+                return;
+            }
+
+            document.getElementById("notes").value = `${record.notes}`;
+
+            const playersList = document.getElementById("playersUl");
+            record.players.forEach(async (player) => {
+                document.getElementById("no_players").hidden = true;
+                const a = document.createElement("a");
+                const precord = await pb
+                    .collection("users")
+                    .getOne(`${player}`, {});
+                a.textContent = precord.name;
+                a.classList.add("removable");
+                a.dataset.id = player;
+                a.addEventListener("click", async (a) => {
+                    if (
+                        confirm(
+                            `Are you sure you want to remove ${a.originalTarget.textContent}?`,
+                        )
+                    ) {
+                        let id = a.originalTarget.dataset.id;
+                        game = await pb
+                            .collection("games")
+                            .update(`${record.id}`, {
+                                "players-": `${id}`,
+                            });
+                        a.originalTarget.style.display = "none";
+                    }
+                });
+                playersList.appendChild(a);
+                playersList.appendChild(document.createElement("br"));
+                playersList.appendChild(document.createElement("br"));
+            });
+        }
+
+        getInfo();
+    </script>
+
+    <body>
+        <section id="main">
+            <h1 id="header"></h1>
+            <br />
+            <hr />
+            <br />
+            <div id="not_started">
+                <h2>Players:</h2>
+                <br />
+                <p id="no_players">No players have joined yet.</p>
+                <div id="playersUl"></div>
+                <br />
+                <hr />
+                <br />
+                <h2>Notes:</h2>
+                <br />
+                <textarea
+                    name="notes"
+                    id="notes"
+                    style="
+                        width: 100%;
+                        height: 100px;
+                        max-width: 100%;
+                        max-height: 4em;
+                    "
+                    placeholder="Notes about your game that will be visible when a player registers (e.g. a description, additional rules, etc)"
+                ></textarea>
+                <br />
+                <br />
+                <button onclick="" id="update_notes">Update Notes</button>
+                <br />
+                <br />
+                <hr />
+                <br />
+                <button onclick="" id="start_game">Start Game</button>
+                <span class="divider">|</span>
+                <button onclick="" id="delete_game">Delete Game</button>
+            </div>
+            <div id="started" hidden></div>
+            <br />
+            <br />
+            <button onclick="window.location.href = '/dashboard.html'">
+                Back
+            </button>
+        </section>
+    </body>
+
+    <script>
+        document
+            .getElementById("start_game")
+            .addEventListener("click", async (e) => {
+                try {
+                    const record = await pb
+                        .collection("games")
+                        .getFirstListItem(`game_code='${code_param}'`, {});
+
+                    const shuffled = record.players
+                        .map((value) => ({ value, sort: Math.random() }))
+                        .sort((a, b) => a.sort - b.sort)
+                        .map(({ value }) => value);
+
+                    for (let i = 0; i < shuffled.length; i++) {
+                        target_idx = i + 1;
+                        if (target_idx == shuffled.length) {
+                            target_idx = 0;
+                        }
+
+                        const data = {
+                            user: `${shuffled[i]}`,
+                            target: `${shuffled[target_idx]}`,
+                            is_alive: true,
+                            target_pending_elimination: false,
+                            game: `${record.id}`,
+                        };
+
+                        await pb.collection("players").create(data);
+                        await pb
+                            .collection("games")
+                            .update(record.id, { started: true });
+
+                        location.reload();
+                    }
+                } catch (error) {
+                    alert("Failed to start game: " + error.message);
+                }
+            });
+    </script>
+
+    <script>
+        document
+            .getElementById("update_notes")
+            .addEventListener("click", async (e) => {
+                try {
+                    const record = await pb
+                        .collection("games")
+                        .getFirstListItem(`game_code='${code_param}'`, {});
+                    nval = document.getElementById("notes").value;
+                    await pb.collection("games").update(`${record.id}`, {
+                        notes: `${nval}`,
+                    });
+                    alert(`Notes updated successfully!`);
+                } catch (error) {
+                    alert(
+                        "Failed to update notes (max length 2048 characters): " +
+                            error.message,
+                    );
+                }
+            });
+    </script>
+
+    <script>
+        document
+            .getElementById("delete_game")
+            .addEventListener("click", async (e) => {
+                try {
+                    if (confirm("Are you sure you want to delete this game?")) {
+                        const record = await pb
+                            .collection("games")
+                            .getFirstListItem(`game_code='${code_param}'`, {});
+                        await pb.collection("games").delete(`${record.id}`);
+                        alert(`Game deleted successfully!`);
+                        window.location.href = "/dashboard.html";
+                    }
+                } catch (error) {
+                    alert(
+                        "Failed to delete game (max length 2048 characters): " +
+                            error.message,
+                    );
+                }
+            });
+    </script>
+</html>

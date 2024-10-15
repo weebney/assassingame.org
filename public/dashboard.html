@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Dashboard - Assassin Game</title>
+        <link rel="stylesheet" href="reset.css" />
+        <link rel="stylesheet" href="styles.css" />
+        <script src="pb/pocketbase.umd.js"></script>
+        <script>
+            const pb = new PocketBase("http://127.0.0.1:8090");
+        </script>
+    </head>
+
+    <script>
+        // bounce unauthed
+        if (!pb.authStore.isValid) {
+            window.location.href = "/";
+        }
+    </script>
+
+    <script>
+        async function fetchGames() {
+            try {
+                const organizer_games = await pb
+                    .collection("games")
+                    .getFullList({
+                        filter: `organizer.id='${pb.authStore.model.id}'`,
+                        sort: "created",
+                    });
+                console.log(organizer_games);
+                organizer_games.forEach((game) => {
+                    document.getElementById("not_organizer").hidden = true;
+                    const ogdiv = document.getElementById("organizerGames");
+                    anchor = document.createElement("a");
+                    anchor.textContent = `${game.name} (${game.game_code})`;
+                    anchor.href = `/cpanel.html?code=${game.game_code}`;
+                    ogdiv.appendChild(document.createElement("br"));
+                    ogdiv.appendChild(anchor);
+                    ogdiv.appendChild(document.createElement("br"));
+                });
+
+                const player_games = await pb.collection("games").getFullList({
+                    filter: `players.id?='${pb.authStore.model.id}'`,
+                    sort: "created",
+                });
+                console.log(player_games);
+                player_games.forEach((game) => {
+                    document.getElementById("not_player").hidden = true;
+                    const ogdiv = document.getElementById("playerGames");
+                    anchor = document.createElement("a");
+                    anchor.textContent = `${game.name}`;
+                    anchor.href = `/game.html?code=${game.game_code}`;
+                    ogdiv.appendChild(document.createElement("br"));
+                    ogdiv.appendChild(anchor);
+                    ogdiv.appendChild(document.createElement("br"));
+                });
+            } catch (error) {
+                console.error("Error fetching organizer games:", error);
+            }
+        }
+
+        fetchGames();
+    </script>
+
+    <body>
+        <section id="main">
+            <h1>Dashboard</h1>
+            <br />
+            <hr />
+            <br />
+            <div id="playerGames"></div>
+            <br />
+            <p id="not_player">You haven't joined any games.</p>
+            <br />
+            <button onclick="window.location.href = '/join.html';">
+                Join game
+            </button>
+            <br />
+            <br />
+            <hr />
+            <br />
+            <div id="organizerGames"></div>
+            <br />
+            <p id="not_organizer">You haven't organized any games.</p>
+            <br />
+            <button onclick="window.location.href = '/create.html';">
+                Create game
+            </button>
+            <br />
+            <br />
+            <hr />
+            <br />
+            <br />
+            <button onclick="window.location.href = 'reset_password.html';">
+                Reset password
+            </button>
+            <button onclick="window.location.href = '/change_picture.html';">
+                Change picture
+            </button>
+            <br />
+            <br />
+            <button
+                onclick="pb.authStore.clear();
+        window.location.href = '/';"
+            >
+                Logout
+            </button>
+            <br />
+            <br />
+            <br />
+            <br />
+            <a href="/rules.html">Rule Book</a>
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <footer>
+                <a
+                    href="https://weebney.com"
+                    style="text-decoration: none"
+                    target="_blank"
+                >
+                    <small>Created by weebney 2024 </small>
+                </a>
+            </footer>
+        </section>
+    </body>
+</html>

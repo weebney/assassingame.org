@@ -1,0 +1,91 @@
+body {
+    min-height: 99vh;
+    width: 100vw;
+    color: white;
+    background-color: black;
+    font-family: monospace;
+    text-align: center;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.divider {
+    padding: 0px 1em 0px 1em;
+}
+
+strong {
+    font-weight: bold;
+}
+
+#main {
+    max-width: 512px;
+}
+
+h1 {
+    font-size: xx-large;
+}
+
+button {
+    font-family: monospace;
+    background-color: black;
+    color: white;
+}
+
+label {
+    width: 100%;
+    display: block;
+    text-align: left;
+}
+
+input {
+    width: 100%;
+}
+
+p {
+    text-align: center;
+    line-height: 1.5em;
+    padding-bottom: 2em;
+}
+
+#select-picture {
+    width: 96px;
+    height: 96px;
+    background-image: url("/assets/placeholder_agent.png");
+}
+
+.error {
+    color: red;
+}
+
+a,
+a:visited {
+    color: white;
+}
+
+.nilla {
+    background-color: beige;
+    color: black;
+    width: 512px;
+    height: 512px;
+    border-radius: 10px;
+}
+
+.nilla > legend {
+    background-color: beige;
+    border-radius: 10px;
+    height: 60px;
+    margin-left: 20px;
+}
+
+small {
+    color: grey;
+}
+
+@media (max-width: 800px) {
+    #main {
+        max-width: 90vw;
+        padding-top: 2em;
+    }
+}

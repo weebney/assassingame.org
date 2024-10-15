@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Change Picture - Assassin Game</title>
+        <link rel="stylesheet" href="reset.css" />
+        <link rel="stylesheet" href="styles.css" />
+        <script src="pb/pocketbase.umd.js"></script>
+        <script>
+            const pb = new PocketBase("http://127.0.0.1:8090");
+        </script>
+    </head>
+    <script>
+        // bounce unauthed
+        if (!pb.authStore.isValid) {
+            window.location.href = "/";
+        }
+    </script>
+
+    <body>
+        <section id="main">
+            <h1>Change Picture</h1>
+            <hr />
+            <br />
+            <h2>Current picture:</h2>
+            <br />
+            <img src="" alt="" width="256px" id="preview" />
+            <br />
+            <br />
+            <hr />
+            <br />
+            <label for="pic">Select New Picture</label> <br />
+            <form action="" id="changePicForm">
+                <input
+                    type="file"
+                    accept="image/*"
+                    name="pic"
+                    id="pic"
+                    required
+                />
+                <br />
+                <br />
+                <button type="submit">Change</button>
+            </form>
+            <br />
+            <hr />
+            <br />
+            <button onclick="window.location.href = '/dashboard.html'">
+                Back
+            </button>
+            <br /><br />
+        </section>
+
+        <script>
+            async function previewCurrent() {
+                const user = await pb
+                    .collection("users")
+                    .getOne(pb.authStore.model.id);
+                document.getElementById("preview").src =
+                    `/api/files/users/${pb.authStore.model.id}/${user.avatar}`;
+            }
+            previewCurrent();
+
+            async function changeAvi(img) {
+                try {
+                    const data = {
+                        avatar: img,
+                    };
+                    const updatedImg = await pb
+                        .collection("users")
+                        .update(pb.authStore.model.id, data);
+                    console.log("Updated successfully:", updatedImg);
+                    return updatedImg;
+                } catch (error) {
+                    console.error("Error updating image:", error);
+                    throw error;
+                }
+            }
+
+            document
+                .getElementById("changePicForm")
+                .addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    const img = document.getElementById("pic").files[0];
+                    try {
+                        await changeAvi(img);
+                        alert(`Picture changed!`);
+                        window.location.href = "/change_picture.html";
+                    } catch (error) {
+                        alert(
+                            "Failed to change image (max size is 5mb): " +
+                                error.message,
+                        );
+                    }
+                });
+        </script>
+    </body>
+</html>

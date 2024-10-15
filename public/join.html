@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Join Game - Assassin Game</title>
+        <link rel="stylesheet" href="reset.css" />
+        <link rel="stylesheet" href="styles.css" />
+        <script src="pb/pocketbase.umd.js"></script>
+        <script>
+            const pb = new PocketBase("http://127.0.0.1:8090");
+        </script>
+    </head>
+    <script>
+        // bounce unauthed
+        if (!pb.authStore.isValid) {
+            window.location.href = "/";
+        }
+    </script>
+    <body>
+        <section id="main">
+            <h1>Join Game</h1>
+            <hr />
+            <br />
+            <form id="joinGameForm">
+                <label for="code">Game Code</label>
+                <input
+                    id="gameCode"
+                    type="text"
+                    placeholder="8 character game code"
+                    name="code"
+                />
+                <br />
+                <br />
+                <br />
+                <button type="submit">Submit</button>
+                <br />
+                <br />
+            </form>
+            <button onclick="window.location.href = '/dashboard.html'">
+                Back
+            </button>
+            <br />
+            <br />
+        </section>
+    </body>
+
+    <script>
+        async function createNewGame(pb, gameCode) {
+            try {
+                game = await pb
+                    .collection("games")
+                    .getFirstListItem(`game_code='${gameCode}'`, {});
+
+                await pb.collection("games").update(game.id, {
+                    "players+": `${pb.authStore.model.id}`,
+                });
+
+                await pb.collection("users").update(pb.authStore.model.id, {
+                    "games+": `${game.id}`,
+                });
+                console.log("Game joined successfully");
+            } catch (error) {
+                console.error("Error joining game:", error);
+                throw error;
+            }
+        }
+
+        document
+            .getElementById("joinGameForm")
+            .addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const gameCode = document.getElementById("gameCode").value;
+                try {
+                    await createNewGame(pb, gameCode);
+                    alert(`Succesfully joined game!`);
+                    window.location.href = `/game.html?code=${gameCode}`;
+                } catch (error) {
+                    alert("Failed to join game: " + error.message);
+                }
+            });
+    </script>
+</html>

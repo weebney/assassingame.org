@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Assassin Game</title>
+        <link rel="stylesheet" href="reset.css" />
+        <link rel="stylesheet" href="styles.css" />
+        <script src="pb/pocketbase.umd.js"></script>
+        <script>
+            const pb = new PocketBase("http://127.0.0.1:8090");
+        </script>
+    </head>
+
+    <script>
+        // bounce unauthed
+        if (!pb.authStore.isValid) {
+            window.location.href = "/";
+        }
+    </script>
+
+    <style>
+        @media (max-width: 800px) {
+            .nilla {
+                max-width: 90vw;
+                padding-top: 2em;
+            }
+        }
+    </style>
+
+    <body>
+        <section id="main">
+            <div id="game_play" hidden>
+                <fieldset class="nilla">
+                    <legend><pre>&Tab;&Tab;&NewLine;&NewLine;</pre></legend>
+                    <h1>Your Target:</h1>
+                    <br />
+                    <div
+                        style="
+                            width: 100%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        "
+                    >
+                        <div
+                            id="target_image"
+                            style="
+                                display: block;
+                                background-image: url();
+                                height: 300px;
+                                width: 256px;
+                                background-size: cover;
+                            "
+                        ></div>
+                    </div>
+                    <br />
+                    <br />
+                    <h1 id="target_name"></h1>
+                    <p
+                        id="elim_pending"
+                        style="text-align: center; line-height: 3em"
+                        hidden
+                    >
+                        Waiting for elimination confirmation...
+                    </p>
+                </fieldset>
+                <br />
+                <br />
+                <button id="target_eliminated">Target Eliminated</button>
+                <span class="divider">&Tab;|&Tab;</span>
+                <button>I was Eliminated</button>
+            </div>
+            <div id="not_started">
+                <h1>The game has not started yet.</h1>
+                <br />
+                <br />
+                <p id="notes"></p>
+                <br />
+                <br />
+                <button id="leave_game">Leave Game</button>
+            </div>
+            <br />
+            <button onclick="window.location.href = '/dashboard.html'">
+                Back
+            </button>
+        </section>
+
+        <script>
+            let urlp = new URLSearchParams(window.location.search);
+            let gameCode = urlp.get("code");
+            async function getNotes() {
+                const notes = document.getElementById("notes");
+                let q = await pb
+                    .collection("games")
+                    .getFirstListItem(`game_code='${gameCode}'`, {});
+                notes.textContent = q.notes;
+
+                const game = await pb
+                    .collection("games")
+                    .getFirstListItem(`game_code='${gameCode}'`, {});
+                const player_record = await pb
+                    .collection("players")
+                    .getFirstListItem(
+                        `game='${game.id}' && user='${pb.authStore.model.id}'`,
+                        {},
+                    );
+                if ((player_record.target_pending_elimination = true)) {
+                    document.getElementById("elim_pending").hidden = false;
+                }
+
+                if (q.started) {
+                    document.getElementById("not_started").hidden = true;
+                    document.getElementById("game_play").hidden = false;
+                    const record = await pb
+                        .collection("players")
+                        .getFirstListItem(`game="${q.id}"`, {});
+
+                    if (!record.is_alive) {
+                        window.location.href = "/eliminated.html";
+                    }
+
+                    const target = await pb
+                        .collection("users")
+                        .getOne(`${record.target}`, {});
+
+                    document.getElementById("target_name").textContent =
+                        target.name;
+
+                    document.getElementById(
+                        "target_image",
+                    ).style.backgroundImage =
+                        `url('/api/files/users/${target.id}/${target.avatar}')`;
+                }
+            }
+            getNotes();
+        </script>
+
+        <script>
+            document
+                .getElementById("leave_game")
+                .addEventListener("click", async (e) => {
+                    try {
+                        if (
+                            confirm("Are you sure you want to leave this game?")
+                        ) {
+                            const record = await pb
+                                .collection("games")
+                                .getFirstListItem(
+                                    `game_code='${gameCode}'`,
+                                    {},
+                                );
+                            await pb.collection("games").update(record.id, {
+                                "players-": `${pb.authStore.model.id}`,
+                            });
+                            window.location.href = "/dashboard.html";
+                        }
+                    } catch (error) {
+                        alert("Failed to leave game: " + error.message);
+                    }
+                });
+        </script>
+
+        <script>
+            document
+                .getElementById("target_eliminated")
+                .addEventListener("click", async (e) => {
+                    try {
+                        if (
+                            confirm(
+                                "Are you sure you want to mark your target as eliminated?",
+                            )
+                        ) {
+                            const game = await pb
+                                .collection("games")
+                                .getFirstListItem(
+                                    `game_code='${gameCode}'`,
+                                    {},
+                                );
+
+                            const player_record = await pb
+                                .collection("players")
+                                .getFirstListItem(`game='${game.id}'`, {});
+
+                            await pb
+                                .collection("players")
+                                .update(player_record.id, {
+                                    target_pending_elimination: true,
+                                });
+
+                            document.getElementById("elim_pending").hidden =
+                                false;
+                        }
+                    } catch (error) {
+                        alert(
+                            "Failed to mark target as eliminated: " +
+                                error.message,
+                        );
+                    }
+                });
+        </script>
+    </body>
+</html>

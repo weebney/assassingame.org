@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Create Game - Assassin Game</title>
+        <link rel="stylesheet" href="reset.css" />
+        <link rel="stylesheet" href="styles.css" />
+        <script src="pb/pocketbase.umd.js"></script>
+        <script>
+            const pb = new PocketBase("http://127.0.0.1:8090");
+        </script>
+    </head>
+    <script>
+        // bounce unauthed
+        if (!pb.authStore.isValid) {
+            window.location.href = "/";
+        }
+    </script>
+    <body>
+        <section id="main">
+            <h1>Create Game</h1>
+            <hr />
+            <br />
+            <form action="" id="createGameForm">
+                <label for="gameName">Game Name</label>
+                <input
+                    type="text"
+                    placeholder="Our Assassin Game"
+                    name="gameName"
+                    id="gameName"
+                    required
+                />
+                <br />
+                <br />
+                <label for="code">Notes</label>
+                <textarea
+                    name="notes"
+                    id="notes"
+                    style="
+                        width: 100%;
+                        height: 100px;
+                        max-width: 100%;
+                        max-height: 4em;
+                    "
+                    placeholder="Notes about your game that will be visible when a player registers (e.g. a description, additional rules, etc)"
+                ></textarea>
+                <br />
+                <br />
+                <br />
+                <p>
+                    The game code will be sent to your email,<br />along with
+                    instructions on how to join.
+                </p>
+                <br />
+                <button type="submit">Submit</button>
+                <br />
+                <br />
+            </form>
+            <button onclick="window.location.href = '/dashboard.html'">
+                Back
+            </button>
+            <br />
+            <br />
+        </section>
+
+        <script>
+            async function createNewGame(pb, gameName, notes) {
+                try {
+                    const data = {
+                        name: gameName,
+                        game_code: generateGameCode(),
+                        notes: notes,
+                        organizer: pb.authStore.model.id,
+                    };
+
+                    const createdGame = await pb
+                        .collection("games")
+                        .create(data);
+                    console.log("Game created successfully:", createdGame);
+                    return createdGame;
+                } catch (error) {
+                    console.error(
+                        "Error creating game (name length min 4 max 32, notes length max 2048):",
+                        error,
+                    );
+                    throw error;
+                }
+            }
+
+            function generateGameCode() {
+                // This is a simple example. You might want to make this more robust
+                return Math.random()
+                    .toString(36)
+                    .substring(2, 10)
+                    .toUpperCase();
+            }
+
+            document
+                .getElementById("createGameForm")
+                .addEventListener("submit", async (e) => {
+                    e.preventDefault();
+                    const gameName = document.getElementById("gameName").value;
+                    const notes = document.getElementById("notes").value;
+                    try {
+                        const game = await createNewGame(pb, gameName, notes);
+                        alert(
+                            `Game created successfully! Game code: ${game.game_code}`,
+                        );
+
+                        window.location.href = "/dashboard.html";
+                    } catch (error) {
+                        alert("Failed to create game: " + error.message);
+                    }
+                });
+        </script>
+    </body>
+</html>
