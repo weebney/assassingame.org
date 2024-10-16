@@ -69,7 +69,7 @@
                 <br />
                 <br />
                 <button id="target_eliminated">Target Eliminated</button>
-                <span class="divider">&Tab;|&Tab;</span>
+                <br />
                 <button id="self_eliminated">I was Eliminated</button>
             </div>
             <div id="not_started">
@@ -108,6 +108,7 @@
                     );
                 if ((player_record.target_pending_elimination = true)) {
                     document.getElementById("elim_pending").hidden = false;
+                    document.getElementById("target_eliminated").hidden = true;
                 }
 
                 if (q.started) {
@@ -191,6 +192,10 @@
 
                             document.getElementById("elim_pending").hidden =
                                 false;
+
+                            confirm(
+                                "Your target has been marked for elimination. They need to login and mark themselves eliminated before you are assigned a new target.",
+                            );
                         }
                     } catch (error) {
                         alert(
